@@ -66,6 +66,26 @@ I read 15 random misclassified tweets. Patterns in this small sample:
 - Many negative tweets have no emotional words. They are requests or questions inside a bad situation, e.g. "called ... it says high call volumes ... is there any way someone can contact me". The model calls these neutral, sometimes with confidence around 0.77.
 - Very short, tone-dependent tweets ("well here we go", "sweet follow back and i'll get the dm off") get low confidence (about 0.45) and are often wrong.
 - Some neutral tweets contain words common in negative tweets ("nothing", "left my phone"), so the model leans negative.
+
+
+## Confidence threshold analysis
+
+The API returns `confident: true` when the top class probability is at least the threshold. I measured this on the 2891 test tweets (evaluate.py):
+
+| threshold | answered | coverage | accuracy on answered | macro-F1 on answered |
+|---|---|---|---|---|
+| 0.4 | 2832 | 98.0% | 0.788 | 0.736 |
+| 0.5 | 2412 | 83.4% | 0.833 | 0.784 |
+| 0.6 | 1870 | 64.7% | 0.895 | 0.854 |
+| 0.7 | 1353 | 46.8% | 0.929 | 0.892 |
+| 0.8 | 840 | 29.1% | 0.967 | 0.940 |
+| 0.9 | 349 | 12.1% | 0.983 | 0.892 |
+
+- Higher threshold means higher accuracy but fewer tweets answered automatically.
+- I chose 0.6: accuracy on answered tweets rises from 0.78 (no threshold) to 0.895, and about 65% of tweets are still handled automatically. Going to 0.7 gains only about 3 accuracy points but loses 18 points of coverage.
+- If a wrong automatic reply is costly, 0.7 is a reasonable stricter choice. The threshold can be changed with the `CONFIDENCE_THRESHOLD` environment variable.
+- At 0.9 macro-F1 drops again because only 349 tweets remain and almost no neutral ones, so that number is unstable.
+- Caveat: the model uses `class_weight="balanced"`, so these confidences are not calibrated probabilities. The threshold applies to the raw score. Also, I picked the threshold on the same test set I report on, so the numbers are slightly optimistic.
 - Some labels look doubtful. "...helped make awesome" is labelled negative, but reads positive.
 
 Takeaway: errors with confidence around 0.45 can be filtered by an API confidence threshold, but a few wrong predictions reach 0.77, so a threshold will not catch everything.
