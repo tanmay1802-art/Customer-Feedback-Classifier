@@ -4,7 +4,7 @@
 - Twitter US Airline Sentiment (Kaggle, Crowdflower), 14,640 tweets
 - After cleaning (duplicates + empty text removed): 14,452 rows
 - Labels: negative 9087 (~63%), neutral 3067 (~21%), positive 2298 (~16%)
-- The data is imbalanced, so accuracy alone is misleading. A model that always says "negative" gets ~63% accuracy. I use macro-F1 instead.
+- The data is imbalanced, so accuracy alone is misleading. A model that always says "negative" gets ~63% accuracy (macro-F1 ~0.26). I use macro-F1 instead.
 
 ## Setup
 - 80/20 train/test split, `random_state=42`, `stratify` on the label
@@ -37,8 +37,11 @@ accuracy 0.79, macro-F1 0.72
 - I saved LogisticRegression because its macro-F1 is slightly higher and it supports `predict_proba`, which the API needs for the confidence threshold.
 
 ## Experiments
-- ngram_range (1, 2) -> (1, 1): macro-F1 changed from 0.73 to 0.71
-- class_weight="balanced" removed: recall dropped most for positive class
+- `ngram_range` (1, 2) -> (1, 1): macro-F1 dropped from 0.73 to 0.71. Bigrams such as "not good" carry meaning that single words miss, so they help.
+- `class_weight="balanced"` removed: recall dropped most for the positive class (it was 0.73 with balanced weights). Without the weights the model favours the majority class (negative) and the small classes get ignored.
+- Both experiments were reverted, and `train.py` is back to `ngram_range=(1, 2)` with `class_weight="balanced"`.
 
 ## Why 80/20 split?
-An 80/20 split strikes an ideal balance between training data volume and evaluation reliability. Using 80% of the data provides the model with enough examples to capture nuanced linguistic patterns and sentiment cues, while reserving 20% (nearly 2,900 independent samples) ensures a robust, unbiased test set to accurately measure generalization performance without overfitting.
+I train on 80% of the data (about 11,560 tweets) so the model has enough examples to learn from, and keep 20% (2,891 tweets) that it never sees during training. I use `stratify` so both parts have the same label mix (~63% negative).
+
+If I trained on all the data and tested on the same data, the model would already have seen those tweets, so the score would only show how well it memorised them, not how it handles new tweets. The held-out 20% gives an honest estimate of real-world performance.
