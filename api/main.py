@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from utils import clean
+from agent.reply import handle_feedback
 
 MODEL_PATH = "model/sentiment_model.joblib"
 THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.6"))
@@ -62,3 +63,16 @@ def predict(req: PredictRequest):
             str(c): round(float(p), 4) for c, p in zip(model.classes_, proba)
         },
     )
+
+
+class AnalyzeResponse(PredictResponse):
+    action: str
+    reply: str | None = None
+    reply_error: str | None = None
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+def analyze(req: PredictRequest):
+    pred = predict(req)
+    result = handle_feedback(req.text, pred.label, pred.confident)
+    return AnalyzeResponse(**pred.model_dump(), **result)
