@@ -45,3 +45,29 @@ accuracy 0.79, macro-F1 0.72
 I train on 80% of the data (about 11,560 tweets) so the model has enough examples to learn from, and keep 20% (2,891 tweets) that it never sees during training. I use `stratify` so both parts have the same label mix (~63% negative).
 
 If I trained on all the data and tested on the same data, the model would already have seen those tweets, so the score would only show how well it memorised them, not how it handles new tweets. The held-out 20% gives an honest estimate of real-world performance.
+
+## Error analysis (evaluate.py)
+
+Baseline (always "negative"): accuracy 0.629, macro-F1 0.257. The model gets accuracy 0.781 and macro-F1 0.728, so it learned real signal.
+
+Confusion matrix (rows = true, columns = predicted):
+
+| | pred_negative | pred_neutral | pred_positive |
+|---|---|---|---|
+| true_negative | 1533 | 215 | 70 |
+| true_neutral | 154 | 388 | 71 |
+| true_positive | 60 | 64 | 336 |
+
+What I see:
+- Most errors involve neutral. 215 negative tweets were predicted neutral, and 154 neutral tweets were predicted negative. Negative vs positive confusion is small (70 and 60).
+- The 215 negative-to-neutral errors are the main reason neutral precision is low (0.58): negative tweets leak into the neutral prediction.
+
+I read 15 random misclassified tweets. Patterns in this small sample:
+- Many negative tweets have no emotional words. They are requests or questions inside a bad situation, e.g. "called ... it says high call volumes ... is there any way someone can contact me". The model calls these neutral, sometimes with confidence around 0.77.
+- Very short, tone-dependent tweets ("well here we go", "sweet follow back and i'll get the dm off") get low confidence (about 0.45) and are often wrong.
+- Some neutral tweets contain words common in negative tweets ("nothing", "left my phone"), so the model leans negative.
+- Some labels look doubtful. "...helped make awesome" is labelled negative, but reads positive.
+
+Takeaway: errors with confidence around 0.45 can be filtered by an API confidence threshold, but a few wrong predictions reach 0.77, so a threshold will not catch everything.
+
+Note: this is based on 15 tweets out of 634 errors, so these are patterns in a sample, not proof.
