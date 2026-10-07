@@ -51,3 +51,17 @@ print(f"\n=== Misclassified: {len(wrong)} of {len(results)} ===")
 for _, r in wrong.sample(15, random_state=42).iterrows():
     print(f"\ntrue={r['true']} | pred={r['pred']} | conf={r['confidence']:.2f}")
     print(r["text"])
+
+# 4. Confidence threshold analysis
+print("\n=== Confidence threshold analysis ===")
+print("threshold | answered | coverage | accuracy on answered | macro-F1 on answered")
+for t in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+    mask = results["confidence"] >= t
+    n = int(mask.sum())
+    if n == 0:
+        print(f"{t:.1f}       | 0")
+        continue
+    sub = results[mask]
+    acc = accuracy_score(sub["true"], sub["pred"])
+    mf1 = f1_score(sub["true"], sub["pred"], average="macro", zero_division=0)
+    print(f"{t:.1f}       | {n:5d}    | {n / len(results):6.1%}   | {acc:.3f}                | {mf1:.3f}")
