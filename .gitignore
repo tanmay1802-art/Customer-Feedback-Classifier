@@ -5,3 +5,4 @@ data/Tweets.csv
 data/clean.csv
 model/*.joblib
 .env
+uvicorn.log
