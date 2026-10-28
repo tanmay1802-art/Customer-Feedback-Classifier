@@ -265,7 +265,3 @@ Choose the threshold on a validation set, calibrate the probabilities, add `pyte
 ![Negative tweet with drafted reply](docs/screenshots/ui-negative-reply.png)
 ![API /analyze response](docs/screenshots/api-analyze.png)
 
-## Demo
-
-![Negative tweet with drafted reply](docs/screenshots/ui-negative-reply.png)
-![API /analyze response](docs/screenshots/api-analyze.png)
