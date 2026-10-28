@@ -259,3 +259,8 @@ Choose the threshold on a validation set, calibrate the probabilities, add `pyte
 - Add `pytest` tests for `clean()` and the API.
 - Try a small transformer model for the neutral class.
 - Dockerize the API and UI.
+
+## Demo
+
+![Negative tweet with drafted reply](docs/screenshots/ui-negative-reply.png)
+![API /analyze response](docs/screenshots/api-analyze.png)
